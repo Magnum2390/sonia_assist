@@ -1,0 +1,19 @@
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+*.log
+
+# VS Code
+.vscode/
+
+# Project specific
+cache/
+server/cache/
+*.mp3
