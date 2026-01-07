@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BOB 2.0 Launcher"""
+"""Sonia Launcher"""
 
 import sys
 import subprocess

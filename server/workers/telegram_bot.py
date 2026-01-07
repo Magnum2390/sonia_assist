@@ -10,7 +10,7 @@ import ctypes
 
 class TelegramWorker(QThread):
     """Thread gérant le bot Telegram"""
-    message_received = pyqtSignal(str) # Émet le texte reçu pour traitement par BOB
+    message_received = pyqtSignal(str) # Émet le texte reçu pour traitement par Sonia
     request_screenshot = pyqtSignal()
     
     def __init__(self):
