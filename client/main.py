@@ -5,8 +5,7 @@ import requests
 import threading
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThread, pyqtSignal, QTimer
-# Ugly import fix relative path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Local imports (Now legit!)
 from streaming_tts import StreamingTTS, StreamingAI
 from optimized_hud import OptimizedHUD
 import speech_recognition as sr
