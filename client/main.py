@@ -23,9 +23,9 @@ class VoiceWorker(QThread):
         self.running = True
         self.recognizer = sr.Recognizer()
         self.recognizer.energy_threshold = 300
-        self.recognizer.pause_threshold = 0.6
+        self.recognizer.pause_threshold = 0.4 # Safe Fast (prev: 0.2 was too aggressive)
         self.recognizer.phrase_threshold = 0.3
-        self.recognizer.non_speaking_duration = 0.4
+        self.recognizer.non_speaking_duration = 0.3 # Safe Fast (prev: 0.2)
         self.recognizer.dynamic_energy_threshold = False
     
     def run(self):
@@ -111,16 +111,41 @@ class SoniaClient:
         self.wake_words = ["sonia", "sonya"]
         self.is_processing = False
         
+        # --- Conversation Mode (Jarvis Style) ---
+        self.conversation_active = False
+        self.conversation_timer = QTimer()
+        self.conversation_timer.setSingleShot(True)
+        self.conversation_timer.timeout.connect(self.end_conversation_mode)
+        
+    def end_conversation_mode(self):
+        """Called when 20s have passed without voice"""
+        if self.conversation_active:
+            print("Conversation Timeout. Returning to sleep.")
+            self.conversation_active = False
+            self.hud.set_state("idle")
+            # Optional: Play a "Sleep" sound
+            # self.tts.speak_immediate("Sleeping.")
+        
     def start(self):
         self.hud.show()
         self.voice_worker.start()
-        self.tts.speak_immediate("Client Connected. I'm ready.")
+        # Silent startup (Alexa-style)
+        # self.tts.speak_immediate("Client Connected. I'm ready.")
         sys.exit(self.app.exec())
         
     def on_voice_input(self, text):
         print(f"Heard: {text}")
         
-        # Wake Word Logic
+        # 1. Active Listening Mode (Jarvis Style)
+        if self.conversation_active:
+            # If we are already active, we process EVERYTHING.
+            # And reset the timer.
+            print("Active Mode: Resetting Timer")
+            self.conversation_timer.start(20000) # 20 seconds
+            self.process_command(text)
+            return
+
+        # 2. Wake Word Logic (Passive Mode)
         text_lower = text.lower()
         if not any(w in text_lower for w in self.wake_words) and not self.is_processing: return
         
@@ -129,8 +154,15 @@ class SoniaClient:
             if w in text_lower:
                 clean = re.split(w, text, flags=re.IGNORECASE)[-1].strip()
         
+        # Activate Conversation Mode
+        print("Wake Word Detected -> Enter Conversation Mode")
+        self.conversation_active = True
+        self.hud.set_state("listening_active")
+        self.conversation_timer.start(20000) # 20 seconds
+        
         if not clean:
-            self.tts.speak_immediate("Yes?")
+            # Silent wake (Visual feedback only via HUD)
+            # self.tts.speak_immediate("Yes?")
             return
             
         self.process_command(clean)
@@ -173,7 +205,12 @@ class SoniaClient:
         
     def reset_state(self):
         self.is_processing = False
-        self.hud.set_state("idle")
+        if self.conversation_active:
+            print("Action Complete. Resetting Conversation Timer (20s).")
+            self.conversation_timer.start(20000) # Reset full 20s AFTER speaking
+            self.hud.set_state("listening_active")
+        else:
+            self.hud.set_state("idle")
 
 import re
 

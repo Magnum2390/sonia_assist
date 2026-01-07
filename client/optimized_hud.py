@@ -2,7 +2,7 @@ import sys
 import math
 from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtCore import Qt, QTimer, QPointF, QRectF, QThread, pyqtSignal
-from PyQt6.QtGui import QPixmap, QPainter, QTransform
+from PyQt6.QtGui import QPixmap, QPainter, QTransform, QColor
 
 class AIWorker(QThread):
     """Thread séparé pour les calculs IA"""
@@ -55,6 +55,8 @@ class OptimizedHUD(QWidget):
             self.timer.start(8)  # Plus rapide
         elif state == "speaking":
             self.timer.start(12)
+        elif state == "listening_active":
+            self.timer.start(14) # Un peu plus rapide que idle
         else:
             self.timer.start(16)
     
@@ -92,10 +94,17 @@ class OptimizedHUD(QWidget):
         painter.setTransform(transform)
         
         # Couleur selon état
+        # Couleur selon état
         if self.state == "thinking":
             painter.setOpacity(0.8)
         elif self.state == "speaking":
             painter.setOpacity(1.0)
+        elif self.state == "listening_active":
+            painter.setOpacity(1.0)
+            # Dessiner un cercle rouge/orange derrière pour indiquer l'écoute active
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor(255, 69, 0, 100)) # OrangeRed avec transparence
+            painter.drawEllipse(center, self.width()/2 - 10, self.height()/2 - 10)
         else:
             painter.setOpacity(0.6)
             

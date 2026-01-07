@@ -88,7 +88,7 @@ class StreamingTTS:
                     while channel.get_busy():
                         pygame.time.wait(10)
                 else:
-                print("Warning: No audio channel available to play sound.")
+                    print("Warning: No audio channel available to play sound.")
                 
                 # Nettoyer fichier temporaire
                 try:
@@ -141,10 +141,20 @@ class StreamingAI:
     def process_token(self, token):
         """Traite chaque token généré par l'IA"""
         self.current_buffer += token
-        # print(f"DEBUG TOKEN: {token}", end="", flush=True) # Uncomment for extreme debug
         
         # Détecter fin de phrase (ou retour à la ligne)
-        if any(p in token for p in ['.', '!', '?', '\n']):
+        # Optimisation "Temps Réel": On coupe aussi sur les virgules si le buffer est assez long
+        # pour éviter d'attendre la fin d'une longue phrase complexe.
+        is_sentence_end = any(p in token for p in ['.', '!', '?', '\n'])
+        is_sub_clause = any(p in token for p in [',', ':', ';'])
+        
+        should_speak = False
+        if is_sentence_end:
+            should_speak = True
+        elif is_sub_clause and len(self.current_buffer) > 40: # ~6-8 mots
+            should_speak = True
+            
+        if should_speak:
             sentence = self.current_buffer.strip()
             if sentence and len(sentence) > 2: # Avoid speaking single chars
                 print(f"Speaking: {sentence}")
@@ -155,7 +165,7 @@ class StreamingAI:
     def flush_buffer(self):
         """Parle le reste du buffer"""
         if self.current_buffer.strip():
-            print(f"🗣️ Flushing: {self.current_buffer.strip()}")
+            print(f"Flushing: {self.current_buffer.strip()}")
             self.tts.speak_immediate(self.current_buffer.strip())
             self.current_buffer = ""
             self.has_spoken = True

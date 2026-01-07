@@ -5,19 +5,24 @@ import sys
 
 # Configuration initiale de l'interpréteur
 interpreter.offline = True # Force le mode local
-interpreter.llm.model = "ollama/mistral:7b"
+interpreter.llm.model = "ollama/mistral-nemo"
 interpreter.llm.api_base = "http://localhost:11434"
 interpreter.auto_run = True
 interpreter.system_message = """
-You are the Execution Engine for Sonia.
-Your role is to ACT. Do not talk, just execute.
+You are an advanced Command Line Interface (CLI).
+Your ONLY purpose is to EXECUTE code.
 
-IMPORTANT: To run commands, you MUST use markdown code blocks.
+RULES:
+1. DIRECTLY write the code in a markdown block.
+2. DO NOT use JSON. DO NOT use function calling schemas.
+3. DO NOT describe what you are going to do. JUST DO IT.
+
 Example:
+User: Create hello.txt
+Assistant:
 ```shell
-echo "hello"
+echo "Hello" > hello.txt
 ```
-Do NOT use JSON tool calls. Just write the code in the block.
 """
 
 class ExecutionWorker(QThread):
@@ -40,12 +45,19 @@ class ExecutionWorker(QThread):
             self.log_output.emit(f"Executing: {self.command}")
             
             # Exécution via Open Interpreter
-            result = interpreter.chat(self.command)
-            
+            print(f"DEBUG: Calling interpreter with '{self.command}'")
+            try:
+                result = interpreter.chat(self.command)
+                print(f"DEBUG: Interpreter RAW RESULT: {result}")
+            except Exception as e_chat:
+                print(f"DEBUG: Interpreter Chat CRASH: {e_chat}")
+                raise e_chat
+
             final_summary = "Terminé."
             full_report = []
             
             for msg in result:
+                print(f"DEBUG: Message in result: {msg}") # Debug ligne par ligne
                 if msg.get('role') == 'assistant':
                     content = msg.get('content')
                     if content: 

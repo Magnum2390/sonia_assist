@@ -2,15 +2,16 @@
 import requests
 import json
 import time
+import datetime
 
 class OptimizedOllama:
     def __init__(self, base_url="http://localhost:11434"):
         self.base_url = base_url
         self.models = {
-            "fast": "phi3:mini",           # 3.8B - Ultra rapide
-            "balanced": "mistral:7b",      # 7B - Bon compromis
-            "smart": "mistral:7b",        # 8B - Plus intelligent
-            "coding": "codellama:7b"       # 7B - Spécialisé code
+            "fast": "mistral-nemo",        # 12B - On veut la qualité Nemo tout le temps
+            "balanced": "mistral-nemo",    # 12B
+            "smart": "mistral-nemo",       # 12B
+            "coding": "mistral-nemo"       # 12B - Nemo est bon en code aussi
         }
         self.current_model = "balanced"
     
@@ -71,9 +72,10 @@ class SmartModelSelector:
         model_type = self.select_model_for_query(query)
         self.ollama.set_model(model_type)
         
-        # System Prompt
-        JARVIS_SYSTEM_PROMPT = """You are Sonia, an advanced personal AI assistant. 
-Answer in a concise, intelligent, and warm manner.
-Be efficient and direct in your responses."""
+        # System Prompt - Automatic/Natural with Time Awareness
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        JARVIS_SYSTEM_PROMPT = f"""You are Sonia, a helpful personal assistant.
+Current Date and Time: {now}
+Respond to the user naturally and effectively."""
         
         return self.ollama.chat_streaming(query, JARVIS_SYSTEM_PROMPT)
