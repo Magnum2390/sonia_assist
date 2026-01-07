@@ -8,10 +8,10 @@ from pathlib import Path
 from logger_config import logger
 
 def main():
-    logger.info("🚀 Launching Sonia System...")
+    logger.info("Launching Sonia System...")
     
     # 1. Launch Server (Brain)
-    logger.info("🧠 Starting Brain (Server)...")
+    logger.info("Starting Brain (Server)...")
     server_cmd = [sys.executable, "server/main.py"]
     server_process = subprocess.Popen(server_cmd)
     
@@ -19,7 +19,7 @@ def main():
     time.sleep(3)
     
     # 2. Launch Client (Body)
-    logger.info("👁️ Starting Body (Client)...")
+    logger.info("Starting Body (Client)...")
     client_cmd = [sys.executable, "client/main.py"]
     client_process = subprocess.Popen(client_cmd)
     
@@ -27,16 +27,16 @@ def main():
         # Keep main script alive watching processes
         while True:
             if server_process.poll() is not None:
-                logger.error("🔥 Server died!")
+                logger.error("Server died!")
                 client_process.terminate()
                 break
             if client_process.poll() is not None:
-                logger.info("👋 Client closed. Shutting down server...")
+                logger.info("Client closed. Shutting down server...")
                 server_process.terminate()
                 break
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("🛑 Shutting down...")
+        logger.info("Shutting down...")
         server_process.terminate()
         client_process.terminate()
     except Exception as e:

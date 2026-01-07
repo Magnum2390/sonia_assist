@@ -37,7 +37,7 @@ class ExecutionWorker(QThread):
             return
             
         try:
-            self.log_output.emit(f"🚀 Executing: {self.command}")
+            self.log_output.emit(f"Executing: {self.command}")
             
             # Exécution via Open Interpreter
             result = interpreter.chat(self.command)
@@ -56,10 +56,10 @@ class ExecutionWorker(QThread):
                     if output:
                         clean_output = output[:200] + "..." if len(output) > 200 else output
                         full_report.append(f"[Output]: {clean_output}")
-                        self.log_output.emit(f"💻 {clean_output}")
+                        self.log_output.emit(f"Output: {clean_output}")
 
             self.finished.emit(final_summary)
             
         except Exception as e:
             self.finished.emit(f"Erreur d'exécution: {str(e)}")
-            self.log_output.emit(f"🔥 Error: {str(e)}")
+            self.log_output.emit(f"Error: {str(e)}")

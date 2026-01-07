@@ -23,7 +23,7 @@ class TelegramWorker(QThread):
 
     def run(self):
         if not self.token or not self.allowed_chat_id:
-            print("⚠️ Telegram Config Missing")
+            print("[Telegram] Config Missing")
             return
 
         # Créer une nouvelle boucle d'événements pour ce thread
@@ -44,7 +44,7 @@ class TelegramWorker(QThread):
         await self.app.start()
         await self.app.updater.start_polling()
         
-        print("✅ Telegram Worker Started")
+        print("[Telegram] Worker Started")
         
         # Garder le thread en vie
         while self.running:
@@ -60,18 +60,18 @@ class TelegramWorker(QThread):
 
     async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self.check_auth(update): return
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="🟢 **Sonia En Ligne**")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="**Sonia Online**")
 
     async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self.check_auth(update): return
         cpu = psutil.cpu_percent()
         bat = psutil.sensors_battery()
-        msg = f"CPU: {cpu}%\nBatterie: {bat.percent if bat else 'AC'}%"
+        msg = f"CPU: {cpu}%\nBattery: {bat.percent if bat else 'AC'}%"
         await context.bot.send_message(chat_id=update.effective_chat.id, text=msg)
 
     async def cmd_lock(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await self.check_auth(update): return
-        await context.bot.send_message(chat_id=update.effective_chat.id, text="🔒 Verrouillage...")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Locking workstation...")
         ctypes.windll.user32.LockWorkStation()
 
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

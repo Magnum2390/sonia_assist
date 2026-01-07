@@ -52,13 +52,13 @@ def status():
 async def chat_endpoint(req: ChatRequest):
     """Streaming Chat Endpoint"""
     query = req.query
-    print(f"🧠 [Brain] Received Query: {query}")
+    print(f"[Brain] Received Query: {query}")
     
     # 1. Check Cache
     if cache.is_cacheable(query):
         cached = cache.get(query)
         if cached:
-            print(f"🧠 [Brain] Cache Hit: {cached}")
+            print(f"[Brain] Cache Hit: {cached}")
             # Generator for cached response
             async def cached_stream():
                 yield cached
@@ -84,7 +84,7 @@ async def chat_endpoint(req: ChatRequest):
 def execute_endpoint(req: CommandRequest):
     """Execute System Command"""
     cmd = req.command
-    print(f"⚙️ [Execution] Running: {cmd}")
+    print(f"[Execution] Running: {cmd}")
     
     try:
         # Interpreter chat returns a list of dicts

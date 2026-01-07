@@ -88,7 +88,7 @@ class StreamingTTS:
                     while channel.get_busy():
                         pygame.time.wait(10)
                 else:
-                    print("⚠️ Warning: No audio channel available to play sound.")
+                print("Warning: No audio channel available to play sound.")
                 
                 # Nettoyer fichier temporaire
                 try:
@@ -147,7 +147,7 @@ class StreamingAI:
         if any(p in token for p in ['.', '!', '?', '\n']):
             sentence = self.current_buffer.strip()
             if sentence and len(sentence) > 2: # Avoid speaking single chars
-                print(f"🗣️ Speaking: {sentence}")
+                print(f"Speaking: {sentence}")
                 self.tts.speak_immediate(sentence)
                 self.current_buffer = ""
                 self.has_spoken = True

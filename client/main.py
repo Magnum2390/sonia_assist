@@ -91,7 +91,7 @@ class APIWorker(QThread):
 
 class SoniaClient:
     def __init__(self):
-        print("🤖 Initializing Sonia Client...")
+        print("Initializing Sonia Client...")
         self.app = QApplication(sys.argv)
         
         self.hud = OptimizedHUD("hud_icon.png") # Local path now
@@ -118,7 +118,7 @@ class SoniaClient:
         sys.exit(self.app.exec())
         
     def on_voice_input(self, text):
-        print(f"👂 Heard: {text}")
+        print(f"Heard: {text}")
         
         # Wake Word Logic
         text_lower = text.lower()
@@ -141,7 +141,7 @@ class SoniaClient:
         self.hud.set_state("thinking")
         self.streaming_ai.reset()
         
-        # Routing Logic (Client Side Routing ? Or Server Side ?)
+        # Routing Logic
         # Let's keep it simple: Client decides endpoint
         action_keywords = ["open", "run", "make", "delete", "close"]
         is_action = any(k in text.lower() for k in action_keywords)
@@ -157,7 +157,7 @@ class SoniaClient:
         self.api_worker.start()
         
     def on_api_complete(self, response):
-        print("✅ Response Complete")
+        print("Response Complete")
         self.streaming_ai.flush_buffer()
         
         if response and not self.streaming_ai.has_spoken:

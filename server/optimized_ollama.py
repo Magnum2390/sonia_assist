@@ -18,7 +18,7 @@ class OptimizedOllama:
         """Change le modèle selon le besoin"""
         if model_type in self.models:
             self.current_model = model_type
-            print(f"🔄 Switched to {model_type} model: {self.models[model_type]}")
+            print(f"Switched to {model_type} model: {self.models[model_type]}")
             
     def chat_streaming(self, query, system_prompt=None):
         """Générateur qui stream la réponse token par token"""
