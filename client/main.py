@@ -1,91 +1,22 @@
 
 import sys
 import os
-import requests
 import threading
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThread, pyqtSignal, QTimer
 # Local imports (Now legit!)
 from streaming_tts import StreamingTTS, StreamingAI
 from optimized_hud import OptimizedHUD
-import speech_recognition as sr
+import datetime
 
 # Configuration
 SERVER_URL = "http://localhost:8000"
 
-# --- Workers ---
+# --- Workers Imports ---
+from workers.voice_worker import VoiceWorker
+from workers.api_worker import APIWorker
 
-class VoiceWorker(QThread):
-    voice_detected = pyqtSignal(str)
-    
-    def __init__(self):
-        super().__init__()
-        self.running = True
-        self.recognizer = sr.Recognizer()
-        self.recognizer.energy_threshold = 300
-        self.recognizer.pause_threshold = 0.4 # Safe Fast (prev: 0.2 was too aggressive)
-        self.recognizer.phrase_threshold = 0.3
-        self.recognizer.non_speaking_duration = 0.3 # Safe Fast (prev: 0.2)
-        self.recognizer.dynamic_energy_threshold = False
-    
-    def run(self):
-        with sr.Microphone() as source:
-            print("🎤 Microphone initialized")
-            while self.running:
-                try:
-                    audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
-                    # Whisper local ou Google
-                    text = self.recognizer.recognize_google(audio, language="en-US")
-                    if text:
-                        self.voice_detected.emit(text)
-                except:
-                    pass
-    
-    def stop(self):
-        self.running = False
-
-class APIWorker(QThread):
-    token_received = pyqtSignal(str)
-    response_complete = pyqtSignal(str)
-    error_occurred = pyqtSignal(str)
-    
-    def __init__(self):
-        super().__init__()
-        self.query = None
-        self.endpoint = "/chat" # /chat or /execute
-    
-    def set_query(self, query, endpoint="/chat"):
-        self.query = query
-        self.endpoint = endpoint
-        
-    def run(self):
-        if not self.query: return
-        
-        try:
-            if self.endpoint == "/chat":
-                # Streaming Response
-                full_resp = ""
-                with requests.post(f"{SERVER_URL}/chat", json={"query": self.query}, stream=True) as r:
-                    if r.status_code == 200:
-                        for chunk in r.iter_content(chunk_size=None, decode_unicode=True):
-                            if chunk:
-                                self.token_received.emit(chunk)
-                                full_resp += chunk
-                        self.response_complete.emit(full_resp)
-                    else:
-                        self.error_occurred.emit(f"Server Error: {r.status_code}")
-            
-            elif self.endpoint == "/execute":
-                 # Execution (Blocking)
-                 r = requests.post(f"{SERVER_URL}/execute", json={"command": self.query})
-                 if r.status_code == 200:
-                     data = r.json()
-                     self.response_complete.emit(data.get("summary", "Done"))
-                 else:
-                     self.error_occurred.emit(f"Exec Error: {r.status_code}")
-                     
-        except Exception as e:
-            self.error_occurred.emit(str(e))
+# --- Main Client App ---
 
 # --- Main Client App ---
 
@@ -94,7 +25,11 @@ class SoniaClient:
         print("Initializing Sonia Client...")
         self.app = QApplication(sys.argv)
         
-        self.hud = OptimizedHUD("hud_icon.png") # Local path now
+        # Robust Resource Loading
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(base_dir, "hud_icon.png")
+        
+        self.hud = OptimizedHUD(icon_path) # Local path now
         self.tts = StreamingTTS()
         self.streaming_ai = StreamingAI(self.tts)
         
@@ -129,18 +64,31 @@ class SoniaClient:
     def start(self):
         self.hud.show()
         self.voice_worker.start()
-        # Silent startup (Alexa-style)
-        # self.tts.speak_immediate("Client Connected. I'm ready.")
+        
+        # Dynamic Greeting
+        hour = datetime.datetime.now().hour
+        greeting = "Good Morning"
+        if 12 <= hour < 18:
+            greeting = "Good Afternoon"
+        elif hour >= 18:
+            greeting = "Good Evening"
+            
+        final_msg = f"{greeting}, Sir. All systems are fully operational. Awaiting your command."
+        self.tts.speak_immediate(final_msg)
+        
+        # Activate Conversation Mode immediately
+        print("Startup Complete -> Enter Conversation Mode")
+        self.conversation_active = True
+        self.hud.set_state("listening_active")
+        self.conversation_timer.start(20000) # 20 seconds
+        
         sys.exit(self.app.exec())
         
     def on_voice_input(self, text):
-        print(f"Heard: {text}")
-        
         # 1. Active Listening Mode (Jarvis Style)
         if self.conversation_active:
             # If we are already active, we process EVERYTHING.
             # And reset the timer.
-            print("Active Mode: Resetting Timer")
             self.conversation_timer.start(20000) # 20 seconds
             self.process_command(text)
             return
@@ -155,7 +103,6 @@ class SoniaClient:
                 clean = re.split(w, text, flags=re.IGNORECASE)[-1].strip()
         
         # Activate Conversation Mode
-        print("Wake Word Detected -> Enter Conversation Mode")
         self.conversation_active = True
         self.hud.set_state("listening_active")
         self.conversation_timer.start(20000) # 20 seconds
@@ -179,11 +126,9 @@ class SoniaClient:
         is_action = any(k in text.lower() for k in action_keywords)
         
         if is_action:
-            print("Running Action...")
             self.tts.speak_immediate("On it.")
             self.api_worker.set_query(text, endpoint="/execute")
         else:
-            print("Chatting...")
             self.api_worker.set_query(text, endpoint="/chat")
             
         self.api_worker.start()

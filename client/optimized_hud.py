@@ -94,17 +94,31 @@ class OptimizedHUD(QWidget):
         painter.setTransform(transform)
         
         # Couleur selon état
-        # Couleur selon état
         if self.state == "thinking":
             painter.setOpacity(0.8)
         elif self.state == "speaking":
             painter.setOpacity(1.0)
         elif self.state == "listening_active":
             painter.setOpacity(1.0)
-            # Dessiner un cercle rouge/orange derrière pour indiquer l'écoute active
+            # Pulsation Logic based on angle (0-360)
+            # Fait varier la taille entre 70 et 85 (plus petit que l'icone qui est ~100)
+            # ou juste autour.
+            import math
+            pulse = (math.sin(math.radians(self.angle * 4)) + 1) / 2 # 0 to 1
+            radius = 45 + (pulse * 5) # Varie entre 45 et 50 (Beaucoup plus discret)
+            
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.setBrush(QColor(255, 69, 0, 100)) # OrangeRed avec transparence
-            painter.drawEllipse(center, self.width()/2 - 10, self.height()/2 - 10)
+            # Rouge vif avec transparence variable
+            color = QColor(255, 69, 0)
+            color.setAlpha(int(150 + (pulse * 50))) # 150-200 alpha
+            painter.setBrush(color)
+            
+            # On dessine sans transformation de rotation pour le cercle (optionnel, mais plus propre)
+            painter.resetTransform() 
+            painter.drawEllipse(center, radius, radius)
+            # Remettre la transfo pour l'image qui tourne
+            painter.setTransform(transform)
+            
         else:
             painter.setOpacity(0.6)
             

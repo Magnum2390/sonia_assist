@@ -38,8 +38,7 @@ class StreamingTTS:
                 if text is None:  # Signal d'arrêt
                     break
                 
-                # Nettoyage des emojis (Mode Bourrin: ASCII only pour l'Anglais)
-                # Cela supprime tous les caractères complexes/emojis qui ne sont pas du texte standard
+                # Emoji Cleaning: Remove non-standard characters to prevent TTS issues
                 clean_text = text.encode('ascii', 'ignore').decode('ascii')
                 clean_text = clean_text.strip()
                 

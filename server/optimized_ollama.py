@@ -21,7 +21,7 @@ class OptimizedOllama:
             self.current_model = model_type
             print(f"Switched to {model_type} model: {self.models[model_type]}")
             
-    def chat_streaming(self, query, system_prompt=None):
+    def chat_streaming(self, query, system_prompt=None, **kwargs):
         """Générateur qui stream la réponse token par token"""
         url = f"{self.base_url}/api/chat"
         
@@ -37,6 +37,14 @@ class OptimizedOllama:
             "stream": True
         }
         
+        # Merge additional options (keep_alive, options dict, etc.)
+        if kwargs:
+            payload.update(kwargs)
+            # Special handling if 'options' is passed as a dict inside kwargs
+            if "options" in kwargs:
+                 # Ensure it's merged correctly if needed, but Ollama API takes 'options' at top level too
+                 pass
+        
         try:
             with requests.post(url, json=payload, stream=True) as response:
                 if response.status_code == 200:
@@ -46,7 +54,6 @@ class OptimizedOllama:
                                 data = json.loads(line)
                                 if "message" in data and "content" in data["message"]:
                                     token = data["message"]["content"]
-                                    # print(f"DEBUG OLLAMA: {token}", flush=True)
                                     yield token
                             except:
                                 pass
@@ -72,10 +79,25 @@ class SmartModelSelector:
         model_type = self.select_model_for_query(query)
         self.ollama.set_model(model_type)
         
-        # System Prompt - Automatic/Natural with Time Awareness
+        # System Prompt - Fluid & Fast (Direct & Natural)
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        JARVIS_SYSTEM_PROMPT = f"""You are Sonia, a helpful personal assistant.
-Current Date and Time: {now}
-Respond to the user naturally and effectively."""
+        JARVIS_SYSTEM_PROMPT = f"""You are Sonia, a helpful AI.
+Current Date: {now}
+Interact naturally and fluidly.
+- Be direct and concise.
+- Provide clear answers.
+- Use context."""
         
-        return self.ollama.chat_streaming(query, JARVIS_SYSTEM_PROMPT)
+        # Options: Aggressive Speed Tuning
+        # keep_alive=-1 (Stay in RAM)
+        # num_ctx=2048 (Low Context for Max Speed)
+        # top_k=20 (Fast Sampling)
+        options = {
+            "keep_alive": -1,
+            "num_ctx": 2048,
+            "temperature": 0.5,
+            "top_k": 20,
+            "top_p": 0.9,
+            "repeat_penalty": 1.1
+        }
+        return self.ollama.chat_streaming(query, JARVIS_SYSTEM_PROMPT, options=options)

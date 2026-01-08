@@ -45,19 +45,12 @@ class ExecutionWorker(QThread):
             self.log_output.emit(f"Executing: {self.command}")
             
             # Exécution via Open Interpreter
-            print(f"DEBUG: Calling interpreter with '{self.command}'")
-            try:
-                result = interpreter.chat(self.command)
-                print(f"DEBUG: Interpreter RAW RESULT: {result}")
-            except Exception as e_chat:
-                print(f"DEBUG: Interpreter Chat CRASH: {e_chat}")
-                raise e_chat
-
+            result = interpreter.chat(self.command)
+            
             final_summary = "Terminé."
             full_report = []
             
             for msg in result:
-                print(f"DEBUG: Message in result: {msg}") # Debug ligne par ligne
                 if msg.get('role') == 'assistant':
                     content = msg.get('content')
                     if content: 
