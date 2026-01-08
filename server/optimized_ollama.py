@@ -15,10 +15,10 @@ class OptimizedOllama:
         # Format: "groq/model_name" or "model_name" (for local Ollama)
         
         self.models = {
-            "fast": "groq/llama3-8b-8192" if self.groq.client else "phi3:mini",
-            "balanced": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini",
-            "smart": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini",
-            "coding": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini"
+            "fast": "groq/llama-3.1-8b-instant" if self.groq.client else "phi3:mini",
+            "balanced": "groq/llama-3.3-70b-versatile" if self.groq.client else "phi3:mini",
+            "smart": "groq/llama-3.3-70b-versatile" if self.groq.client else "phi3:mini",
+            "coding": "groq/llama-3.3-70b-versatile" if self.groq.client else "phi3:mini"
         }
         
         self.current_model = "balanced"
