@@ -6,6 +6,10 @@ import subprocess
 import time
 from pathlib import Path
 from logger_config import logger
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def main():
     logger.info("Launching Sonia System...")
