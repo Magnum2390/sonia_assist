@@ -72,9 +72,11 @@ class OptimizedHUD(QWidget):
         QTimer.singleShot(2000, lambda: self.set_state("idle"))
 
     def center_on_screen(self):
+        # Renamed logic to position bottom-right
         screen = QApplication.primaryScreen().geometry()
-        x = (screen.width() - self.width()) // 2
-        y = (screen.height() - self.height()) // 2
+        # Marge de 20px à droite et 60px en bas (pour éviter la barre des tâches)
+        x = screen.width() - self.width() - 20
+        y = screen.height() - self.height() - 60
         self.move(x, y)
 
     def rotate_image(self):

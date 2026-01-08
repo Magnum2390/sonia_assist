@@ -11,7 +11,7 @@ import os
 
 # --- Configuration Open Interpreter ---
 interpreter.offline = True
-interpreter.llm.model = "ollama/mistral:7b"
+interpreter.llm.model = "ollama/mistral-nemo"
 interpreter.llm.api_base = "http://localhost:11434"
 interpreter.auto_run = True
 interpreter.system_message = """
