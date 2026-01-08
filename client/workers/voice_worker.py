@@ -8,12 +8,12 @@ class VoiceWorker(QThread):
         super().__init__()
         self.running = True
         self.recognizer = sr.Recognizer()
-        # Configuration Audio (Optimized for Long Sentences & Reactivity)
-        self.recognizer.energy_threshold = 300
+        # Configuration Audio (Ultra-Fast / Aggressive)
+        self.recognizer.energy_threshold = 280 # Slightly more sensitive
         self.recognizer.dynamic_energy_threshold = True
-        self.recognizer.pause_threshold = 0.6  # Sweet spot (0.8 was too slow, 0.4 too fast)
-        self.recognizer.phrase_threshold = 0.3
-        self.recognizer.non_speaking_duration = 0.3 # Reduced slighly for reactivity
+        self.recognizer.pause_threshold = 0.4 # 0.2s is too risky (cuts words), 0.4s is the "Alexa" sweet spot
+        self.recognizer.phrase_threshold = 0.2
+        self.recognizer.non_speaking_duration = 0.2 # Instant cut after silence
     
     def run(self):
         with sr.Microphone() as source:

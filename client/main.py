@@ -117,6 +117,11 @@ class SoniaClient:
     def process_command(self, text):
         if self.is_processing: return
         self.is_processing = True
+        
+        # STOP Timer during processing/speaking so it doesn't expire while she talks
+        if self.conversation_active:
+            self.conversation_timer.stop()
+            
         self.hud.set_state("thinking")
         self.streaming_ai.reset()
         

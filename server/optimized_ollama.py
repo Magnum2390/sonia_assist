@@ -35,10 +35,18 @@ class OptimizedOllama:
         model_name = self.models.get(self.current_model, "phi3:mini")
         
         # --- GROQ ROUTING ---
+        # --- GROQ ROUTING ---
         if model_name.startswith("groq/"):
-            real_model = model_name.replace("groq/", "")
-            yield from self.groq.stream_chat(query, system_prompt, model=real_model, **kwargs)
-            return
+            try:
+                real_model = model_name.replace("groq/", "")
+                # Test iterator to catch immediate errors
+                iterator = self.groq.stream_chat(query, system_prompt, model=real_model, **kwargs)
+                yield from iterator
+                return # Success
+            except Exception as e:
+                print(f"[Fallback] Groq failed: {e}. Switching to Local (Phi-3)...")
+                model_name = "phi3:mini" # Fallback model
+                # Continue to Ollama logic...
 
         # --- OLLAMA ROUTING (Fallback) ---
         url = f"{self.base_url}/api/chat"
