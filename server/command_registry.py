@@ -18,17 +18,32 @@ class CommandRegistry:
             (r"(?i)(search|cherche)\s+(for\s+)?(.+)", self.web_search),
             
             # --- Multimedia ---
-            (r"(?i)(monte|augmente)\s+(le\s+)?volume", self.volume_up),
-            (r"(?i)(baisse|diminue)\s+(le\s+)?volume", self.volume_down),
-            (r"(?i)volume\s+(à|a)\s+(\d+)%?", self.volume_set),
-            (r"(?i)(coupe|arrete)\s+(le\s+)?son|mute", self.volume_mute),
-            (r"(?i)(remet|active)\s+(le\s+)?son|unmute", self.volume_unmute),
+            (r"(?i)(monte|augmente|increase|up)\s+(le\s+)?(volume|son|sound)", self.volume_up),
+            (r"(?i)(baisse|diminue|decrease|down)\s+(le\s+)?(volume|son|sound)", self.volume_down),
+            (r"(?i)volume\s+(à|a|to|at)\s+(\d+)%?", self.volume_set),
+            (r"(?i)(coupe|arrete|mute|silence)\s+(le\s+)?(son|sound|audio)|mute", self.volume_mute),
+            (r"(?i)(remet|active|unmute)\s+(le\s+)?(son|sound|audio)|unmute", self.volume_unmute),
             
             # --- Media Control ---
-            (r"(?i)(joue|play|met)\s+(de\s+la\s+)?musique", self.media_play_pause),
-            (r"(?i)(pause|stop)\s+(la\s+)?musique", self.media_play_pause), # Often same key
-            (r"(?i)(suivant|next|prochaine)", self.media_next),
-            (r"(?i)(précédent|previous|avant)", self.media_prev),
+            # --- Media Control ---
+            # 1. Generic "Play Music" (No specific song) -> Default Resume (Spotify)
+            (r"(?i)^(joue|play|met|start)(\s+(de\s+la\s+)?(musique|music|song|chanson|track))?$", self.media_play_music),
+            
+            # 2. Specific Platform: "Play [Title] on YouTube"
+            (r"(?i)^(joue|play|met|ecouter)\s+(.+)\s+(sur|on|via)\s+(youtube|you tube)", self.media_play_youtube),
+            
+            # 3. Specific Platform: "Play [Title] on Spotify"
+            (r"(?i)^(joue|play|met|ecouter)\s+(.+)\s+(sur|on|via)\s+spotify", self.media_play_spotify),
+            
+            # 4. Implicit Default: "Play [Title]" -> Spotify (or User Preference)
+            # Matches "Play Dark" (without "on youtube")
+            (r"(?i)^(joue|play|met|ecouter)\s+(.+)", self.media_play_spotify), # Defaulting to Spotify
+            
+            # Matches: "pause", "stop"
+            (r"(?i)^(pause|stop|arrête|coupe|top|arrete)(\s+(.+)?(musique|music|song|chanson))?$", self.media_pause),
+            
+            (r"(?i)(suivant|next|prochaine|after)", self.media_next),
+            (r"(?i)(précédent|previous|avant|before)", self.media_prev),
         ]
 
     def match_and_execute(self, query):
@@ -73,9 +88,59 @@ class CommandRegistry:
         for _ in range(steps): pyautogui.press("volumeup")
         return f"Volume set to approx {level}%."
 
-    def media_play_pause(self, match):
+    def media_play_music(self, match):
+        """Lance la musique (Reprend la dernière)"""
+        try:
+             subprocess.Popen("start spotify:", shell=True)
+             import time
+             time.sleep(1)
+             pyautogui.press("playpause") 
+             return "Spotify resumed."
+        except:
+             pyautogui.press("playpause")
+             return "Media key pressed."
+
+    def media_play_spotify(self, match):
+        """Cherche sur Spotify"""
+        # Group 2 is title since Group 3 is "on", Group 4 is "spotify" ? 
+        # Wait, Regex 3 is: (joue) (.+) (on) spotify. -> Group 2 is Title.
+        # Regex 4 is: (joue) (.+) -> Group 2 is Title.
+        query = match.group(2).strip()
+        
+        # Cleanup "on spotify" if caught in trailing group (unlikely with specific regexes)
+        print(f"[Registry] Spotify: {query}")
+        subprocess.Popen(f'start spotify:search:"{query}"', shell=True)
+        # Macro attempt (kept, just in case)
+        import time
+        time.sleep(2.0) 
+        pyautogui.press('enter') 
+        time.sleep(0.5)
+        pyautogui.press('tab')
+        pyautogui.press('enter')
+        return f"Opening '{query}' on Spotify."
+
+    def media_play_youtube(self, match):
+        """Cherche sur YouTube (Navigateur défaut)"""
+        import urllib.parse
+        query = match.group(2).strip()
+        print(f"[Registry] YouTube: {query}")
+        
+        encoded_query = urllib.parse.quote(query)
+        # Open Search Results.
+        # Trick: adding "&sp=EgIQAQ%253D%253D" finds Videos only, but standard search is fine.
+        url = f"https://www.youtube.com/results?search_query={encoded_query}"
+        
+        # Using 'start' to open default browser
+        # Quote URL properly for shell
+        subprocess.Popen(f'start "" "{url}"', shell=True)
+        return f"Opening '{query}' on YouTube."
+
+    def media_pause(self, match):
+        pyautogui.press("stop") # Or playpause is better for resume capability?
+        # Typically "stop" resets. "playpause" is better for toggling.
+        # Use playpause to be safe.
         pyautogui.press("playpause")
-        return "Media toggled."
+        return "Media paused."
 
     def media_next(self, match):
         pyautogui.press("nexttrack")

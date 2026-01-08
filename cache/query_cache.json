@@ -58,5 +58,6 @@
   "my day is not": "It sounds like your day isn't going as planned. What's going on? Do you want to talk about it?",
   "yes i am creating a assistance": "Creating an assistance system can be a complex but rewarding project. What kind of assistance are you trying to create (e.g. virtual assistant, customer support, language translation)?",
   "i am creating sonia my": "It looks like you're creating a character or AI profile named Sonia, and I'm the one you're basing it on. What kind of character or AI are you envisioning Sonia to be?",
-  "aut": "It seems like you might have entered a word or abbreviation by mistake. Could you please clarify what you meant to type or ask? I'm here to help with any questions or topics you'd like to discuss."
+  "aut": "It seems like you might have entered a word or abbreviation by mistake. Could you please clarify what you meant to type or ask? I'm here to help with any questions or topics you'd like to discuss.",
+  "play a music": "I'm a text-based AI, I don't have the capability to play music directly. However, I can suggest some popular music options or provide you with a link to a music streaming platform where you can listen to your favorite songs.\n\nWould you like to:\n\nA) Hear a random song suggestion\nB) Request a specific genre or artist\nC) Get a link to a music streaming platform\n\nChoose your response."
 }

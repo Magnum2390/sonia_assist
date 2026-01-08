@@ -127,7 +127,14 @@ class SoniaClient:
         
         # Routing Logic
         # Let's keep it simple: Client decides endpoint
-        action_keywords = ["open", "run", "make", "delete", "close"]
+        action_keywords = [
+            "open", "run", "make", "delete", "close", "start",
+            "play", "joue", "met",             # Media Play
+            "pause", "stop", "arrete", "coupe", # Media Stop
+            "next", "suivant", "previous", "précédent", # Nav
+            "volume", "son", "mute", "unmute",  # Audio
+            "search", "cherche", "calcul"       # Utils
+        ]
         is_action = any(k in text.lower() for k in action_keywords)
         
         if is_action:

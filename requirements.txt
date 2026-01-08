@@ -1,0 +1,29 @@
+# Core
+fastapi
+uvicorn
+pydantic
+requests
+python-dotenv
+
+# AI & Cloud
+groq
+ollama
+open-interpreter
+
+# Audio & Voice
+SpeechRecognition
+edge-tts
+pyaudio
+pygame
+
+# GUI (Client)
+PyQt6
+
+# System & Automation
+pyautogui
+psutil
+names
+time
+
+# Utils
+loguru
