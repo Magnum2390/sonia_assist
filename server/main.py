@@ -33,6 +33,8 @@ app = FastAPI(title="Sonia Brain API", version="1.0")
 ollama = OptimizedOllama()
 selector = SmartModelSelector(ollama)
 cache = SmartCache()
+from command_registry import CommandRegistry
+registry = CommandRegistry()
 
 # --- Models ---
 class ChatRequest(BaseModel):
@@ -82,10 +84,18 @@ async def chat_endpoint(req: ChatRequest):
 
 @app.post("/execute")
 def execute_endpoint(req: CommandRequest):
-    """Execute System Command"""
+    """Execute System Command (Hybrid: Deterministic -> AI Fallback)"""
     cmd = req.command
-    print(f"[Execution] Running: {cmd}")
+    print(f"[Execution] Received: {cmd}")
     
+    # 1. Try Deterministic Registry (The 90% Layer)
+    direct_result = registry.match_and_execute(cmd)
+    if direct_result:
+        print(f"[Execution] Deterministic Match: {direct_result}")
+        return {"status": "success", "summary": direct_result}
+
+    # 2. Fallback to Open Interpreter (The 10% AI Layer)
+    print(f"[Execution] No Match. Delegating to AI (Mistral-Nemo)...")
     try:
         # Interpreter chat returns a list of dicts
         result = interpreter.chat(cmd)
