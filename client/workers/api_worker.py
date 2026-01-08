@@ -24,10 +24,19 @@ class APIWorker(QThread):
             if self.endpoint == "/chat":
                 # Streaming Response
                 full_resp = ""
+                import time
+                start_req = time.time()
+                first_token = True
+                
                 with requests.post(f"{SERVER_URL}/chat", json={"query": self.query}, stream=True) as r:
                     if r.status_code == 200:
                         for chunk in r.iter_content(chunk_size=None, decode_unicode=True):
                             if chunk:
+                                if first_token:
+                                    ttft = time.time() - start_req
+                                    print(f"⏱️ TTFT (Server): {ttft:.2f}s")
+                                    first_token = False
+                                
                                 self.token_received.emit(chunk)
                                 full_resp += chunk
                         self.response_complete.emit(full_resp)

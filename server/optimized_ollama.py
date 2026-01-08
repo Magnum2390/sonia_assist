@@ -1,18 +1,26 @@
-
 import requests
 import json
 import time
 import datetime
+import os
+from groq_client import GroqClient
 
 class OptimizedOllama:
     def __init__(self, base_url="http://localhost:11434"):
         self.base_url = base_url
+        self.groq = GroqClient()
+        
+        # Hybrid Model Configuration
+        # If Groq is available, we use it for SPEED.
+        # Format: "groq/model_name" or "model_name" (for local Ollama)
+        
         self.models = {
-            "fast": "mistral-nemo",        # 12B - On veut la qualité Nemo tout le temps
-            "balanced": "mistral-nemo",    # 12B
-            "smart": "mistral-nemo",       # 12B
-            "coding": "mistral-nemo"       # 12B - Nemo est bon en code aussi
+            "fast": "groq/llama3-8b-8192" if self.groq.client else "phi3:mini",
+            "balanced": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini",
+            "smart": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini",
+            "coding": "groq/llama3-70b-8192" if self.groq.client else "phi3:mini"
         }
+        
         self.current_model = "balanced"
     
     def set_model(self, model_type="fast"):
@@ -22,12 +30,18 @@ class OptimizedOllama:
             print(f"Switched to {model_type} model: {self.models[model_type]}")
             
     def chat_streaming(self, query, system_prompt=None, **kwargs):
-        """Générateur qui stream la réponse token par token"""
+        """Générateur qui stream la réponse token par token (Hybrid Groq/Ollama)"""
+        
+        model_name = self.models.get(self.current_model, "phi3:mini")
+        
+        # --- GROQ ROUTING ---
+        if model_name.startswith("groq/"):
+            real_model = model_name.replace("groq/", "")
+            yield from self.groq.stream_chat(query, system_prompt, model=real_model, **kwargs)
+            return
+
+        # --- OLLAMA ROUTING (Fallback) ---
         url = f"{self.base_url}/api/chat"
-        
-        # Sélection du modèle
-        model_name = self.models.get(self.current_model, "mistral:7b")
-        
         payload = {
             "model": model_name,
             "messages": [
@@ -37,14 +51,10 @@ class OptimizedOllama:
             "stream": True
         }
         
-        # Merge additional options (keep_alive, options dict, etc.)
         if kwargs:
             payload.update(kwargs)
-            # Special handling if 'options' is passed as a dict inside kwargs
-            if "options" in kwargs:
-                 # Ensure it's merged correctly if needed, but Ollama API takes 'options' at top level too
-                 pass
-        
+            if "options" in kwargs: pass 
+
         try:
             with requests.post(url, json=payload, stream=True) as response:
                 if response.status_code == 200:
@@ -71,7 +81,7 @@ class SmartModelSelector:
             return "coding"
         elif any(w in q for w in ["why", "explain", "history", "complex"]):
             return "smart"
-        elif len(q) < 20: # Questions courtes
+        elif len(q) < 20: 
             return "fast"
         return "balanced"
 
@@ -88,16 +98,12 @@ Interact naturally and fluidly.
 - Provide clear answers.
 - Use context."""
         
-        # Options: Aggressive Speed Tuning
-        # keep_alive=-1 (Stay in RAM)
-        # num_ctx=2048 (Low Context for Max Speed)
-        # top_k=20 (Fast Sampling)
+        # Options
         options = {
             "keep_alive": -1,
-            "num_ctx": 2048,
-            "temperature": 0.5,
-            "top_k": 20,
+            "num_ctx": 4096, # Groq handles large context easily
+            "temperature": 0.6,
+            "top_k": 50,
             "top_p": 0.9,
-            "repeat_penalty": 1.1
         }
         return self.ollama.chat_streaming(query, JARVIS_SYSTEM_PROMPT, options=options)

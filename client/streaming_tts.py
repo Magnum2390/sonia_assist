@@ -156,6 +156,8 @@ class StreamingAI:
         if should_speak:
             sentence = self.current_buffer.strip()
             if sentence and len(sentence) > 2: # Avoid speaking single chars
+                if not self.has_spoken:
+                     print(f"⏱️ First Audio Triggered")
                 print(f"Speaking: {sentence}")
                 self.tts.speak_immediate(sentence)
                 self.current_buffer = ""

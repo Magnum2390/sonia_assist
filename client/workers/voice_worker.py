@@ -20,10 +20,15 @@ class VoiceWorker(QThread):
             print("🎤 Microphone initialized")
             while self.running:
                 try:
+                    # print("DEBUG: Listening...")
                     audio = self.recognizer.listen(source, timeout=1, phrase_time_limit=5)
                     # Whisper local ou Google
+                    import time
+                    start_stt = time.time()
                     text = self.recognizer.recognize_google(audio, language="en-US")
+                    end_stt = time.time()
                     if text:
+                        print(f"⏱️ STT Duration: {end_stt - start_stt:.2f}s | Text: {text}")
                         self.voice_detected.emit(text)
                 except:
                     pass
